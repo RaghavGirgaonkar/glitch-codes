@@ -1,4 +1,4 @@
-function [PSD]=createPSD(sampFreq, Tsig, logwelchPSD, freqs)
+function [PSD, fvec]=createPSD(sampFreq, Tsig, logwelchPSD, freqs)
 %% Script to create interpolated PSD from SHAPES and PWELCH Estimates
 
 %% Data Parameters

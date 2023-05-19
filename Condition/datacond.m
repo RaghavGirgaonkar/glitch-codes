@@ -38,32 +38,34 @@ timeVec = (0:N-1)*(1/sampFreq);
 % [b,a] = butter(8,fmin/(sampFreq/2),'high');
 
 %Filter Data
-rolloff = 4; %Roll-off in seconds
-data = data.*tukeywin(length(data), rolloff*sampFreq/N)';
+% rolloff = 4; %Roll-off in seconds
+% data = data.*tukeywin(length(data), rolloff*sampFreq/N)';
+% 
+% filtdata = highpass(data, fmin, sampFreq, ImpulseResponse="iir",Steepness=0.95);
+% 
+% % filtdata = filtdata_temp(t*sampFreq+1:end - t*sampFreq);
+% 
+% %Take welch estimate of specified segment
+% 
+% tempdata = filtdata(tstart*sampFreq: (tstart+seglen)*sampFreq);
+% 
+% % if ~isempty(idx)
+% %     tempdata = filtdata((tstart - nantime)*sampFreq: (tstart- nantime+seglen)*sampFreq);
+% % else
+% %     tempdata = filtdata(tstart*sampFreq: (tstart+seglen)*sampFreq);
+% % end
+% 
+% %Zero-pad segment before Welch estimate
+% % tempdata_t = [zeros(1,winlen*sampFreq), tempdata, zeros(1,winlen*sampFreq)];
+% 
+% [pxx,f]=pwelch(tempdata, tukeywin(winlen*sampFreq),[],[],sampFreq);
+% 
+% logwelchPSD = log10(pxx');
+% 
+% %Interpolate Welch Estimate to create entire PSD vector
+% [PSD, ~] = createPSD(sampFreq, Tsig, logwelchPSD, f');
 
-filtdata = highpass(data, fmin, sampFreq, ImpulseResponse="iir",Steepness=0.95);
-
-% filtdata = filtdata_temp(t*sampFreq+1:end - t*sampFreq);
-
-%Take welch estimate of specified segment
-
-tempdata = filtdata(tstart*sampFreq: (tstart+seglen)*sampFreq);
-
-% if ~isempty(idx)
-%     tempdata = filtdata((tstart - nantime)*sampFreq: (tstart- nantime+seglen)*sampFreq);
-% else
-%     tempdata = filtdata(tstart*sampFreq: (tstart+seglen)*sampFreq);
-% end
-
-%Zero-pad segment before Welch estimate
-% tempdata_t = [zeros(1,winlen*sampFreq), tempdata, zeros(1,winlen*sampFreq)];
-
-[pxx,f]=pwelch(tempdata, tukeywin(winlen*sampFreq),[],[],sampFreq);
-
-logwelchPSD = log10(pxx');
-
-%Interpolate Welch Estimate to create entire PSD vector
-PSD = createPSD(sampFreq, Tsig, logwelchPSD, f');
+[filtdata, PSD] = nanhandle(data, sampFreq, fmin, tstart, seglen, winlen);
 
 %Create Transfer Function
 TF = 1./sqrt(PSD);
