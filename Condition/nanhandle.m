@@ -114,7 +114,7 @@ noiselen = length(nanidxs)/sampFreq;
 %Create Colored noise using this PSD
 fltrOrdr = 10000;
 n = 4; %Extra data in seconds to add to remove later
-outNoise_temp = genColNoise((noiselen+n)*sampFreq, [fvec_temp(:), PSD_temp(:)], fltrOrdr, sampFreq);
+outNoise_temp = genColNoise((noiselen+2*n)*sampFreq, [fvec_temp(:), PSD_temp(:)], fltrOrdr, sampFreq);
 outNoise = outNoise_temp(n*sampFreq+1: end - n*sampFreq);
 
 %% Create Final Vector with Tukey-Windowed Chunks and NaN regions filled
@@ -129,8 +129,8 @@ end
 a = 1;
 for k = 1:length(nanchunk_start_idxs)
     outData(nanchunk_start_idxs(k):nanchunk_end_idxs(k)) = outNoise(a:a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k));
-    a = a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k) + 2;
+    a = a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k) + 1;
 end
-% plotdata(outData, nanchunk_start_idxs, nanchunk_end_idxs, chunk_start_idxs, chunk_end_idxs);
+plotdata(outData, nanchunk_start_idxs, nanchunk_end_idxs, chunk_start_idxs, chunk_end_idxs);
 end
 

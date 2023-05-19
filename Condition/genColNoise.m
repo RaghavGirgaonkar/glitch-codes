@@ -10,8 +10,7 @@ function outNoise = genColNoise(nSamples,psdVals,fltrOrdr,sampFreq)
 
 %Soumya D. Mohanty, Mar 2019
 
-% Added Tukey-windowing option and option to load noise realization from
-% custom pre-made noise files
+% Added Tukey-windowing option 
 
 % Raghav Girgaonkar, Apr 2023
 
@@ -26,8 +25,8 @@ b = fir2(fltrOrdr,freqVec/(sampFreq/2),sqrtPSD,tukeywin(fltrOrdr+1));
 % (Comment out the line below if new realizations of WGN are needed in each run of this script)
 % rng('default'); 
 
-inNoise_t = randn(1,nSamples);
-inNoise = [randn(1,fltrOrdr), inNoise_t, randn(1,fltrOrdr)];
+inNoise = randn(1,nSamples);
+% inNoise = [randn(1,fltrOrdr), inNoise_t, randn(1,fltrOrdr)];
 outNoise = sqrt(sampFreq)*fftfilt(b,inNoise);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
