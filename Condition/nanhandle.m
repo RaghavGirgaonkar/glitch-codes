@@ -63,17 +63,17 @@ logwelchPSD = log10(pxx');
 %% Create Colored noise to fill in NaN regions
 
 %Get size of NaN regions in seconds
-noiselen = length(nanidxs)/sampFreq;
+% noiselen = length(nanidxs)/sampFreq;
 
 %Interpolate Pwelch to match this length
-[PSD_temp, fvec_temp] = createPSD(sampFreq, noiselen, logwelchPSD, f');
+% [PSD_temp, fvec_temp] = createPSD(sampFreq, noiselen, logwelchPSD, f');
 [PSD, ~] = createPSD(sampFreq, Tsig, logwelchPSD, f');
 
 %Create Colored noise using this PSD
-fltrOrdr = 10000;
-n = 4; %Extra data in seconds to add to remove later
-outNoise_temp = genColNoise((noiselen+2*n)*sampFreq, [fvec_temp(:), PSD_temp(:)], fltrOrdr, sampFreq);
-outNoise = outNoise_temp(n*sampFreq+1: end - n*sampFreq);
+% fltrOrdr = 10000;
+% n = 4; %Extra data in seconds to add to remove later
+% outNoise_temp = genColNoise((noiselen+2*n)*sampFreq, [fvec_temp(:), PSD_temp(:)], fltrOrdr, sampFreq);
+% outNoise = outNoise_temp(n*sampFreq+1: end - n*sampFreq);
 
 %% Create Final Vector with Tukey-Windowed Chunks and NaN regions filled
 outData = zeros(size(data));
@@ -84,11 +84,11 @@ for k = 1:length(chunk_start_idxs)
 end
 
 %Lastly add Generated Colored noise in place of NaNs
-a = 1;
-for k = 1:length(nanchunk_start_idxs)
-    outData(nanchunk_start_idxs(k):nanchunk_end_idxs(k)) = outNoise(a:a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k));
-    a = a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k) + 1;
-end
+% a = 1;
+% for k = 1:length(nanchunk_start_idxs)
+%     outData(nanchunk_start_idxs(k):nanchunk_end_idxs(k)) = outNoise(a:a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k));
+%     a = a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k) + 1;
+% end
 plotdata(outData, nanchunk_start_idxs, nanchunk_end_idxs, chunk_start_idxs, chunk_end_idxs, timeVec);
 end
 
