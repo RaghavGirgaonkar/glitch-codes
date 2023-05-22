@@ -1,4 +1,4 @@
-function [outData, PSD] = nanhandle(data, sampFreq, fmin, tstart, seglen, winlen)
+function [outData, PSD, nanchunk_start_idxs, nanchunk_end_idxs] = nanhandle(data, sampFreq, fmin, tstart, seglen, winlen)
 
 rolloff = 0.99; %Roll-off in percentage
 % fmin = 30; %Highpass cutoff
@@ -19,60 +19,18 @@ if isempty(nanidxs)
 
     %Interpolate Welch Estimate to create entire PSD vector
     [PSD, ~] = createPSD(sampFreq, Tsig, logwelchPSD, f');
+    nanchunk_start_idxs = [];
+    nanchunk_end_idxs = [];
     return;
 end
 
 idxs = find(~isnan(data));
 
 %% Get all Non-NaN chunk start and end indices
-chunk_start_idxs = [];
-chunk_end_idxs = [];
-
-for i = 1:length(idxs)-1
-    if i == 1
-        chunk_start_idxs = [chunk_start_idxs, idxs(i)];
-        continue;
-    end
-
-    if idxs(i+1) - idxs(i) ~= 1
-        chunk_end_idxs = [chunk_end_idxs, idxs(i)];
-        continue;
-    end
-
-    if idxs(i) - idxs(i-1) ~= 1
-        chunk_start_idxs = [chunk_start_idxs, idxs(i)];
-        continue;
-    end
-end
-
-if length(chunk_start_idxs) ~= length(chunk_end_idxs)
-   chunk_end_idxs = [chunk_end_idxs, idxs(end)]; 
-end
+[chunk_start_idxs, chunk_end_idxs] = getchunks(idxs);
 
 %% Get all NaN chunk start and end indices
-nanchunk_start_idxs = [];
-nanchunk_end_idxs = [];
-
-for i = 1:length(nanidxs)-1
-    if i == 1
-        nanchunk_start_idxs = [nanchunk_start_idxs, nanidxs(i)];
-        continue;
-    end
-
-    if nanidxs(i+1) - nanidxs(i) ~= 1
-        nanchunk_end_idxs = [nanchunk_end_idxs, nanidxs(i)];
-        continue;
-    end
-
-    if nanidxs(i) - nanidxs(i-1) ~= 1
-        nanchunk_start_idxs = [nanchunk_start_idxs, nanidxs(i)];
-        continue;
-    end
-end
-
-if length(nanchunk_start_idxs) ~= length(nanchunk_end_idxs)
-   nanchunk_end_idxs = [nanchunk_end_idxs, nanidxs(end)]; 
-end
+[nanchunk_start_idxs, nanchunk_end_idxs] = getchunks(nanidxs);
 
 %% Tukey Window and Highpass filter all chunks
 windowedhpchunks = cell(1,length(chunk_end_idxs));
@@ -131,6 +89,6 @@ for k = 1:length(nanchunk_start_idxs)
     outData(nanchunk_start_idxs(k):nanchunk_end_idxs(k)) = outNoise(a:a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k));
     a = a+nanchunk_end_idxs(k) - nanchunk_start_idxs(k) + 1;
 end
-plotdata(outData, nanchunk_start_idxs, nanchunk_end_idxs, chunk_start_idxs, chunk_end_idxs);
+plotdata(outData, nanchunk_start_idxs, nanchunk_end_idxs, chunk_start_idxs, chunk_end_idxs, timeVec);
 end
 

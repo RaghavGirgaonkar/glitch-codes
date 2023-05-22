@@ -3,69 +3,14 @@ function []=datacond(filename, outfilename,tstart, seglen, sampFreq, winlen)
 fmin = 30;
 % sampfreq = 4096;
 
-data_file = h5read(filename, '/strain/Strain')';
-
-data = data_file;
-
-%Account for NaNs in data, find all non-NaN indices
-% idxs = find(~isnan(data_file));
-% 
-% nanidxs = find(isnan(data_file));
-% 
-% wgnfill = randn(1, length(idxs));
-% stdv = 2.5*10^(-19);
-% 
-% data = data_file;
-% for j = 1:length(nanidxs)
-%     data(nanidxs(j)) = wgnfill(j).*stdv;
-% end
-
-
-% data = data_file(nanidxs);
-% 
-% trainingidxs = tstart*sampFreq:(tstart+seglen)*sampFreq;
-% 
-% if ~ismember(trainingidxs,idxs)
-%    error("Choose different segment for Welch estimate");
-% end
-
+data = h5read(filename, '/strain/Strain')';
 
 N = length(data);
 Tsig = N/sampFreq;
 timeVec = (0:N-1)*(1/sampFreq);
 
-%Highpass Filter the data
-% [b,a] = butter(8,fmin/(sampFreq/2),'high');
-
-%Filter Data
-% rolloff = 4; %Roll-off in seconds
-% data = data.*tukeywin(length(data), rolloff*sampFreq/N)';
-% 
-% filtdata = highpass(data, fmin, sampFreq, ImpulseResponse="iir",Steepness=0.95);
-% 
-% % filtdata = filtdata_temp(t*sampFreq+1:end - t*sampFreq);
-% 
-% %Take welch estimate of specified segment
-% 
-% tempdata = filtdata(tstart*sampFreq: (tstart+seglen)*sampFreq);
-% 
-% % if ~isempty(idx)
-% %     tempdata = filtdata((tstart - nantime)*sampFreq: (tstart- nantime+seglen)*sampFreq);
-% % else
-% %     tempdata = filtdata(tstart*sampFreq: (tstart+seglen)*sampFreq);
-% % end
-% 
-% %Zero-pad segment before Welch estimate
-% % tempdata_t = [zeros(1,winlen*sampFreq), tempdata, zeros(1,winlen*sampFreq)];
-% 
-% [pxx,f]=pwelch(tempdata, tukeywin(winlen*sampFreq),[],[],sampFreq);
-% 
-% logwelchPSD = log10(pxx');
-% 
-% %Interpolate Welch Estimate to create entire PSD vector
-% [PSD, ~] = createPSD(sampFreq, Tsig, logwelchPSD, f');
-
-[filtdata, PSD] = nanhandle(data, sampFreq, fmin, tstart, seglen, winlen);
+%Highpass Filter the data and handle NaN-regions
+[filtdata, PSD, nanchunk_start_idxs, nanchunk_end_idxs] = nanhandle(data, sampFreq, fmin, tstart, seglen, winlen);
 
 %Create Transfer Function
 TF = 1./sqrt(PSD);
@@ -96,4 +41,8 @@ whtndfiltdata = ifft(whtndfftfiltdata);
 whtndstd = std(whtndfiltdata(tstart*sampFreq: (tstart+seglen)*sampFreq));
 whtndfiltdata = whtndfiltdata/whtndstd;
 
+%Correct edge effects for files with NaNs
+if ~isempty(isnan(data))
+    whtndfiltdata = correctwhtndstrain(whtndfiltdata, sampFreq, nanchunk_start_idxs, nanchunk_end_idxs);
+end
 createHDF5file(outfilename, whtndfiltdata, TF, N);
