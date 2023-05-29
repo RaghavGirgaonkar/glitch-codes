@@ -1,0 +1,10 @@
+name: qtransform
+dependencies:
+  - python=3.10.6
+  - numpy=1.23.5
+  - matplotlib=3.6.2
+  - conda-forge::librosa=0.9.2
+  - conda-forge::libvorbis
+  - jupyter
+  - h5py=3.7.0
+  - pip
