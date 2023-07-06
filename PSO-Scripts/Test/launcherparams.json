@@ -1,0 +1,7 @@
+{
+"psdfile": "psds.mat",
+"hdf5filenames": "hdf5_file_names.txt",
+"segfile": "segments.txt",
+"sampFreq": 4096,
+"segnum": 1
+}
