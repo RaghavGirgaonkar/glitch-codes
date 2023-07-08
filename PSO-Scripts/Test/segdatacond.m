@@ -5,6 +5,8 @@ fmin = 30;
 
 filtdata = segdata;
 
+datalen = length(filtdata)/sampFreq;
+
 N = length(filtdata);
 Tsig = N/sampFreq;
 timeVec = (0:N-1)*(1/sampFreq);
@@ -16,7 +18,7 @@ timeVec = (0:N-1)*(1/sampFreq);
 TF = 1./sqrt(PSD);
 
 %Set Values of TF below fmin to 0
-TF(1:fmin*sampFreq) = 0;
+TF(1:fmin*datalen) = 0;
 
 %Create entire Transfer Function vector
 negFStrt = 1-mod(N,2);
