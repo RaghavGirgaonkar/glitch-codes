@@ -1,4 +1,4 @@
-function [whtndfiltdata, TFtotal]=segdatacond(segdata, PSD, sampFreq, tstart, winlen)
+function [whtndfiltdata, TFtotal]=segdatacond(segdata, PSD, sampFreq, tidxs)
 
 fmin = 30;
 % sampfreq = 4096;
@@ -29,7 +29,7 @@ TFtotal = [TF, TF((kNyq-negFStrt):-1:2)];
 %Whiten Filter Data with Transfer Function
 %Window data before FFT with a Tukey-window with a 0.5 seconds rolloff
 
-rolloff = 2; %Roll-off in seconds
+rolloff = 0.5; %Roll-off in seconds
 winfiltdata = filtdata.*tukeywin(length(filtdata), rolloff*sampFreq/N)';
 
 fftfiltdata = fft(winfiltdata);
@@ -40,5 +40,7 @@ whtndfiltdata = ifft(whtndfftfiltdata);
 
 %Divide by variance of whitened strain so that final whitened vector has
 %unit strain
-whtndstd = std(whtndfiltdata(tstart*sampFreq: (tstart+winlen)*sampFreq));
+tstart = tidxs(1);
+tend = tidxs(2);
+whtndstd = std(whtndfiltdata(tstart: tend));
 whtndfiltdata = whtndfiltdata/whtndstd;

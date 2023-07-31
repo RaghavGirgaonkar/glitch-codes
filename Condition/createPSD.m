@@ -1,4 +1,4 @@
-function [PSD, fvec]=createPSD(sampFreq, Tsig, logwelchPSD, freqs)
+function [PSD, fvec]=createPSD(sampFreq, Tsig, welchPSD, freqs)
 %% Script to create interpolated PSD from SHAPES and PWELCH Estimates
 
 %% Data Parameters
@@ -14,10 +14,10 @@ fvec = (0:(kNyq))*Fs/N;
 % freqs = (0:nyqfreq)*(Fs/(2*nyqfreq));
 
 %% 1-D Interpolation
-
+logwelchPSD = log10(welchPSD);
 loginterPSD = interp1(freqs, logwelchPSD, fvec);
 
 % %% Antilog
 
-PSD = (10.^loginterPSD)./2;
+PSD = (10.^loginterPSD);
 % PSD = (loginterPSD)./2;
