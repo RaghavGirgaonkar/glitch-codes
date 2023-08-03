@@ -78,7 +78,10 @@ function [hfinal, filtlogS, Pmatrixs, Kmatrixs]=spectogramkstest(dataVec,sampFre
     if y == 0
         hfinal = zeros(nblocks);
     else
-        hfinal = Hmatrixs{1};
+        hfinal = zeros(nblocks);
+        for i = 1: length(Hmatrixs)
+            hfinal = hfinal | Hmatrixs{i};
+        end
     end
 end
 
