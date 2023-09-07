@@ -33,21 +33,30 @@ u = m1_val*m2_val/(m1_val + m2_val);
 chirpmass = (u^3*M^2)^(1/5);
 % pzi = 3*((chirpmass/Msolar)^(-5/3))*(fmin/100)^(-8/3);
 % Nfac = (1/sqrt(50))*(fmin/100)^(2/3);
-
+r = r*Mpc;
 %Factors to keep phase vector unnormalized
 snr = 1;
 normfac = 1;
 
+%Initiate parameters
+% zhi = 34.54*((chirpmass/Msolar)^(-5/3));
+% 
+% Afac = (1.92*10^(-23))*((zhi/25)^(-1))*((r/(100*Mpc))^(-1));
+% 
+% Amplfac = Afac*sqrt(zhi)*((2/(3*fmin))^(1/2))*((1/fmin)^(-7/6));
+
 %Multiply strain amplitude factor
-r = r*Mpc;
+
 % Afac = ((2*u*G)/(r*c^4))*(G*M*pi)^(2/3);
 Afac = ((384/5)^(1/2))*(pi^(2/3))*(chirpmass^(5/6))*(G^(5/6))*(c^(-3/2))/r;
 
 %Create Fourier Phase vector
 wavephase = gen2PNwaveform(fpos, ta, phase, fmin, fmax, m1,m2,datalen, initial_phase, snr, N, avec, normfac);
+% wavephase = gen2PNwaveform_tau(fpos, ta, phase, fmin, fmax, m1,m2,datalen, initial_phase, snr, N, avec, normfac);
 
 %Multiply Fourier Magnitude vector and strain amplitude factor
-wavefourier = Afac*A.*wavephase;
+wavefourier = Afac*((1/fmin)^(-7/6))*A.*wavephase;
+% wavefourier = ((1/fmin)^(-7/6))*A.*wavephase;
 
 %Create waveform vector in time domain
 signal = ifft(wavefourier);

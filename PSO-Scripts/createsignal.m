@@ -1,5 +1,6 @@
 function [signal] = createsignal(siglen, frange, sampFreq, masses, r, initial_phase, phase, ta, mfac)
 %Signal Injection code
+%mfac = 3.2 for GW170817 SNR of 26 in Livingston file 
 
 %Create Positive DFT frequency vector
 N = siglen*sampFreq;

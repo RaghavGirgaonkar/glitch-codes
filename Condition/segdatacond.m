@@ -1,4 +1,4 @@
-function [whtndfiltdata, TFtotal]=segdatacond(segdata, PSD, sampFreq, tidxs)
+function [whtndfiltdata, whtndstd, TFtotal]=segdatacond(segdata, PSD, sampFreq, tidxs)
 
 fmin = 30;
 % sampfreq = 4096;

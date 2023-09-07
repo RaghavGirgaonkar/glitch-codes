@@ -13,7 +13,7 @@ psdfile = launcherparams.psdfile;
 sampFreq = launcherparams.sampFreq;
 segnum = launcherparams.segnum;
 threshold = launcherparams.threshold;
-psdfile = launcherparams.outfilename;
+
 
 %Load Data vector from file(s)
 %Get Segment Data
@@ -71,19 +71,45 @@ end
 
 Seglen = length(segment)/sampFreq;
 
-%Load PSD and condition data
-%Load PSD
-% psdVecs = load(psdfile);
-% PSD = psdVecs.psd(psdnum,:);
+%{
+signalinjectionsegs = [7,9,13,16,17,18];
 
-%Condition Data
-rolloff = 0.1;
+%Inject signals
 fmin = 30;
-% paddedsegment = [zeros(1,sampFreq*rolloff), segment, zeros(1,sampFreq*rolloff)];
-%Window and Highpass filter
-segwin = segment.*tukeywin(length(segment),rolloff*sampFreq/length(segment))';
-seghpass = highpass(segwin, fmin, sampFreq, ImpulseResponse="iir",Steepness=0.95);
-filtsegment = seghpass;
+fmax = 700;
+frange = [fmin,fmax];
+initial_phase = 0; phase = 0;
+siglen = Seglen;
+if sum(ismember(signalinjectionsegs,segnum)) == 1
+    %Draw parameters from uniform distribution
+    m1 = unifrnd(1.4,15);
+    m2 = unifrnd(1.4,15);
+    masses = [m1,m2];
+    %Estimate the corresponding chirptime parameters
+    m1_val = m1*Msolar;
+    m2_val = m2*Msolar;
+    M = m1_val + m2_val;
+    u = m1_val*m2_val/(m1_val + m2_val);
+    n = u/M;
+    tau0 = (5/(256*pi))*(1/fmin)*((G*M*pi*fmin/c^3)^(-5/3))*(1/n);
+    tau1p5 = (1/8)*(1/fmin)*((G*M*pi*fmin/c^3)^(-2/3))*(1/n);
+
+    r = unifrnd(30,100);
+    mfac = unifrnd(2,3.2);
+    ta = unifrnd(100,200);
+    
+    %Create signal
+    signal = createsignal(siglen, frange, sampFreq, masses, r, initial_phase, phase, ta, mfac);
+
+    %Record simulated strain signal in file
+    sigparams = [segnum, tau0, tau1p5, m1, m2, ta, r, mfac];
+    fileID = fopen('injectedsigs.txt','a');
+    fprintf(fileID,'%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n',sigparams);
+    fclose(fileID);
+    %Add signal to segment
+    segment = segment + signal;
+end
+%}
 
 %Load Training Segment PSD
 S = load(psdfile);
@@ -92,11 +118,52 @@ trainidxs = S.trainidxs;
 PSD = segPSDs{segnum};
 trainidxs = trainidxs{segnum};
 
+
+%Condition Data
+rolloff = 0.125;
+fmin = 30;
+% paddedsegment = [zeros(1,sampFreq*rolloff), segment, zeros(1,sampFreq*rolloff)];
+%Window and Highpass filter
+segwin = segment.*tukeywin(length(segment),rolloff*sampFreq/length(segment))';
+seghpass = highpass(segwin, fmin, sampFreq, ImpulseResponse="iir",Steepness=0.95);
+filtsegment = seghpass;
+
+
+
+
+%Add custom signal 
+%{
+frange = [30,700]; masses = [2,2]; ta = 138; siglen = 512; initial_phase = 0; phase = 0;
+
+snr = 40;
+
+% snr = snr*sqrt(2);
+
+[signal] = snrsiginj(PSD, snr, masses, frange, ta, phase, siglen, sampFreq, initial_phase);
+
+[~, whtndstd, TFtotal] = segdatacond(filtsegment, PSD, sampFreq, trainidxs);
+
+sigstrain = whtndstd*signal;
+
+filtsegment = filtsegment + sigstrain;
+
+%}
+
+%% Code snippet to get SNR of injected signals
+S = load('injectedsignals.mat'); sigsegnum = S.segnum; signals = S.signals;
+
+index = find(sigsegnum == segnum);
+
+if index
+    signal = signals(index,:);
+    filtsegment = filtsegment + signal;
+end
+
 %Whiten Segment
 timeVec = (0:(length(filtsegment) - 1))/sampFreq;
-[whtndseg, TFtotal] = segdatacond(filtsegment, PSD, sampFreq, trainidxs);
+[whtndseg,~, TFtotal] = segdatacond(filtsegment, PSD, sampFreq, trainidxs);
 
 %Run PSO based matched-filtering on data vector
 paramfile = 'allparamfiles.json';
-runpso(segment, whtndseg, TFtotal, paramfile,segnum);
+runpso(segment, whtndseg, TFtotal, paramfile,segnum,Seglen);
 end

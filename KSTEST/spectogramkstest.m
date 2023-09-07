@@ -1,4 +1,4 @@
-function [hfinal, filtlogS, Pmatrixs, Kmatrixs]=spectogramkstest(dataVec,sampFreq, nblocks, threshold)
+function [hfinal, filtlogS, Pmatrixs, Kmatrixs, specavgs]=spectogramkstest(dataVec,sampFreq, nblocks, threshold)
 
     %Make spectrogram first
     [s,f,~] = spectrogram(dataVec, 1024, [],[], sampFreq);
@@ -6,7 +6,7 @@ function [hfinal, filtlogS, Pmatrixs, Kmatrixs]=spectogramkstest(dataVec,sampFre
     [~, lenT] = size(logS);
 
     %Get blocks corresponding to freqs between 30 and 700 Hz
-    freqs = find(50<=f & f <=700)';
+    freqs = find(30<=f & f <=700)';
     filtlogS = logS(freqs,:);
     
     %Remove lines
@@ -19,6 +19,11 @@ function [hfinal, filtlogS, Pmatrixs, Kmatrixs]=spectogramkstest(dataVec,sampFre
     filtlogS(filtlogS < avgVal) = avgVal;
     maxVal = max(filtlogS(:));
     filtlogS = filtlogS/(-1*maxVal);
+%     avgVal = median(filtlogS(:));
+%     filtlogS(filtlogS < avgVal) = avgVal;
+    
+%Remove lines
+%     filtlogS = [filtlogS(1:62,:);filtlogS(69:110,:);filtlogS(119:end,:)];
 
      
 
@@ -69,18 +74,23 @@ function [hfinal, filtlogS, Pmatrixs, Kmatrixs]=spectogramkstest(dataVec,sampFre
         Kmatrixs = [Kmatrixs; kmatrix];
     end
     
-    y = 1;
+    y = 0;
     for i = 1:length(Hmatrixs)
         if Hmatrixs{i} == 0
-            y = 0;
+            y = y + 1;
         end
     end
-    if y == 0
+
+    if y > floor(length(Hmatrixs)/2)
         hfinal = zeros(nblocks);
     else
         hfinal = zeros(nblocks);
-        for i = 1: length(Hmatrixs)
-            hfinal = hfinal | Hmatrixs{i};
+        for i = 1:length(Hmatrixs)
+            if ~all(Hmatrixs{i} == 0, 'all')
+                hfinal = hfinal |Hmatrixs{i};
+                break;
+            end
+%             hfinal = hfinal | Hmatrixs{i};
         end
     end
 end
