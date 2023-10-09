@@ -1,4 +1,4 @@
-function []=scanfiles(dirName)
+function []=scanfiles(dirName, outfilename)
 
 %Make List of all HDF5 files in specified directory
 fileList = dir(fullfile(dirName, '*.hdf5'));
@@ -12,14 +12,14 @@ end
 %file
 
 %Open txt file 
-outputFile = fullfile(dirName, 'hdf5_file_names.txt');
+outputFile = fullfile(dirName, outfilename);
 fid = fopen(outputFile, 'w');
 
 for i = 1:numel(fileList)
-    name = fileList(i).name;
+    name = [dirName, '/', fileList(i).name];
     GPSstart = h5read(name,'/meta/GPSstart');
     duration = h5read(name, '/meta/Duration');
-    fprintf(fid, '%s\t%d\t%d\n', name,GPSstart,GPSstart+duration);
+    fprintf(fid, "%s\t%d\t%d\n", name,GPSstart,GPSstart+duration);
 end
 
 fclose(fid);

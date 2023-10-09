@@ -1,4 +1,4 @@
-function [] = runpso(segdata, whtnddata,TFtotal, filename, segnum, Seglen)
+function [] = runpso(segdata, whtnddata,TFtotal, filename, segnum)
 %Script to run Chirp-time or Mass Space PSO on a user specified datasegment and PSD.
 %Refer to User Manual for usage
 
@@ -18,14 +18,16 @@ fname = filenames.filenames;
 str = fileread(fname);
 files = jsondecode(str);
 %% Specify initial parameters
-% T_sig_len = params.signal.T_sig_len;
+T_sig_len = params.signal.T_sig_len;
 T_sig = params.signal.T_sig;
 initial_phase = 0;
 %% Sampling Frequency
 Fs = params.sampling_freq;
 %% Number of samples = num*Fs*T_sig
-% num = params.signal.num;
-N = floor(Seglen*Fs);
+num = params.signal.num;
+sigsamples = length(whtnddata);
+% N = floor(num*T_sig_len*Fs);
+N = sigsamples;
 timeVec = (0:N-1)*(1/Fs);
 %% Min and Max Frequencies Hz
 fmin = params.freq(1);
@@ -114,8 +116,6 @@ inParams = struct('dataX', dataX,...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 maxSteps = pso.maxSteps;
-% mytau0 = -70;
-% mytau1p5 = -1.2;
 if type
     original_fitVal = -1*mfgw_tau([tau0, tau1p5], inParams);
     outStruct = crcbgwpso_tau(inParams,struct('maxSteps',maxSteps),nRuns,Fs);
@@ -160,20 +160,20 @@ legend;
 hold off;
 
 if type
-%     figure;
-%     hold on;
-%     for lpruns = 1:nRuns
-%           rVec = s2rv(outStruct.allRunsOutput(lpruns).allBestLoc,inParams);
-%           plot(rVec(:,1),rVec(:,2),'DisplayName',num2str(lpruns));
-%     end
-%     scatter(tau0,tau1p5,140,'red','filled','D','DisplayName','Original Parameters');
-%     title("Best Parameter Values for All Runs");
-%     xlabel("\tau_0");
-%     ylabel("\tau_{1.5}");
-%     legend;
-%     boundary_plot;
-% %     saveas(gcf,files.bestlocplot);
-%     hold off;
+    figure;
+    hold on;
+    for lpruns = 1:nRuns
+          rVec = s2rv(outStruct.allRunsOutput(lpruns).allBestLoc,inParams);
+          plot(rVec(:,1),rVec(:,2),'DisplayName',num2str(lpruns));
+    end
+    scatter(tau0,tau1p5,140,'red','filled','D','DisplayName','Original Parameters');
+    title("Best Parameter Values for All Runs");
+    xlabel("\tau_0");
+    ylabel("\tau_{1.5}");
+    legend;
+    boundary_plot;
+%     saveas(gcf,files.bestlocplot);
+    hold off;
 
     
 
@@ -207,24 +207,20 @@ if type
                                   '; t_a = ',num2str(outStruct.bestTime),...
                                   '; FitVal = ',num2str(bestFitVal)]);
 else
-%     figure;
-%     hold on;
-%     for lpruns = 1:nRuns
-%           rVec = s2rv(outStruct.allRunsOutput(lpruns).allBestLoc,inParams);
-%           plot(rVec(:,1),rVec(:,2),'DisplayName',num2str(lpruns));
-%     end
-%     scatter(m1,m2,140,'red','filled','D','DisplayName','Original Parameters');
-%     title("Best Parameter Values for All Runs");
-%     xlabel("m_1");
-%     ylabel("m_2");
-%     legend;
+    figure;
+    hold on;
+    for lpruns = 1:nRuns
+          rVec = s2rv(outStruct.allRunsOutput(lpruns).allBestLoc,inParams);
+          plot(rVec(:,1),rVec(:,2),'DisplayName',num2str(lpruns));
+    end
+    scatter(m1,m2,140,'red','filled','D','DisplayName','Original Parameters');
+    title("Best Parameter Values for All Runs");
+    xlabel("m_1");
+    ylabel("m_2");
+    legend;
 %     saveas(gcf,files.bestlocplot);
     hold off;
-
-    est_m1 = outStruct.bestQcCoefs(1);
-    est_m2 = outStruct.bestQcCoefs(2);
-    est_ta = outStruct.bestTime;
-    est_SNR = outStruct.bestAmp;
+    
     %% This will display parameters given through signal.json and PSO-estimated parameters
     %% Uncomment Original parameter display command if needed
 %     disp(['Original parameters:  m1= ',num2str(m1),...
@@ -242,22 +238,9 @@ else
                               '; FitVal = ',num2str(bestFitVal)]);
 end
 
-S = load('injectedsignals.mat'); sigsegnum = S.segnum; sigsnrs = S.injectedsnrs;
-
-index = find(sigsegnum == segnum);
-
-if index
-    signalsnr = sigsnrs(index);
-else
-    signalsnr = 0;
-end
-
-
-candidates = [segnum, t0, t1p5, real(est_m1), imag(est_m1), real(est_m2), imag(est_m2), est_ta, est_SNR, signalsnr];
-% candidates = [segnum, est_m1, est_m2, est_ta, est_SNR];
+candidates = [segnum, real(est_m1), imag(est_m1), real(est_m2), imag(est_m2), est_ta, est_SNR];
 fileID = fopen(files.candidatefile,'a');
-fprintf(fileID,'%d\t%f\t%f\t%f + %fi\t\t%f + %fi\t\t%f\t\t%f\t%f\n',candidates);
-% fprintf(fileID,'%d\t%f\t%f\t%f\t%f\n',candidates);
+fprintf(fileID,'%d\t%f + %fi\t%f + %fi\t%f\t%f\n',candidates);
 fclose(fileID);
 end
 
