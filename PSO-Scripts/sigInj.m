@@ -23,15 +23,13 @@ function [signal] = sigInj(fpos, ta, phase, fmin, fmax, m1,m2,r,datalen, initial
 c = 3*10^8;
 G = 6.6743*10^-11;
 Msolar = 1.989*10^30;
-Mpc = 3.8057*10^22; %1 Megaparsec in meters
-% m1_val = m1;
-% m2_val = m2;
+Mpc = 3.8057*10^22; %1 Megaparsec in meters;
 m1_val = m1*Msolar;
 m2_val = m2*Msolar;
 M = m1_val + m2_val;
 u = m1_val*m2_val/(m1_val + m2_val);
 chirpmass = (u^3*M^2)^(1/5);
-% pzi = 3*((chirpmass/Msolar)^(-5/3))*(fmin/100)^(-8/3);
+% % pzi = 3*((chirpmass/Msolar)^(-5/3))*(fmin/100)^(-8/3);
 % Nfac = (1/sqrt(50))*(fmin/100)^(2/3);
 r = r*Mpc;
 %Factors to keep phase vector unnormalized
@@ -47,19 +45,30 @@ normfac = 1;
 
 %Multiply strain amplitude factor
 
-% Afac = ((2*u*G)/(r*c^4))*(G*M*pi)^(2/3);
-Afac = ((384/5)^(1/2))*(pi^(2/3))*(chirpmass^(5/6))*(G^(5/6))*(c^(-3/2))/r;
+% CUTLER Factor
+% Afac =((384/5)^(1/2))*(pi^(2/3))*(chirpmass^(5/6))*(G^(5/6))*(c^(-3/2))/r; 
+
+% Maggiore Factor 
+Afac= ((5/24)^(1/2))*(pi^(-2/3))*(chirpmass^(5/6))*(G^(5/6))*(c^(-3/2))/r;
+% Afac = 2*u*(G^(5/3))*(M^(2/3))*(pi^(2/3))/(r*c^4);
 
 %Create Fourier Phase vector
 wavephase = gen2PNwaveform(fpos, ta, phase, fmin, fmax, m1,m2,datalen, initial_phase, snr, N, avec, normfac);
 % wavephase = gen2PNwaveform_tau(fpos, ta, phase, fmin, fmax, m1,m2,datalen, initial_phase, snr, N, avec, normfac);
+%  wavephase = gen2PNwaveform_tau_negative(fpos, ta, phase, fmin, fmax, m1,m2,datalen, initial_phase, snr, N, avec, normfac);
 
 %Multiply Fourier Magnitude vector and strain amplitude factor
-wavefourier = Afac*((1/fmin)^(-7/6))*A.*wavephase;
-% wavefourier = ((1/fmin)^(-7/6))*A.*wavephase;
+% wavefourier = Afac*((1/fmin)^(-7/6))*A.*wavephase;
+%  wavefourier = ((1/fmin)^(-7/6))*A.*wavephase;
+wavefourier = A.*wavephase;
 
 %Create waveform vector in time domain
 signal = ifft(wavefourier);
+
+
+
+signal = Afac*4096*(1/sqrt(2))*signal;
+
 
 end
 
